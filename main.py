@@ -9,7 +9,7 @@ from notion.client import NotionClient
 notion_token = os.getenv('NOTION_TOKEN')
 gsheet_id = os.getenv('GSHEET_ID')
 notion_page = os.getenv('NOTION_PAGE')
-gc = gspread.service_account(filename='C:\\Users\\Josh\Dropbox\\gcpcreds.json')
+gc = gspread.service_account()
 ss = gc.open_by_key(gsheet_id)
 
 
