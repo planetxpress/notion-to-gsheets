@@ -1,9 +1,9 @@
+import datetime
 import gspread
 import json
 import re
 import os
 import time
-from datetime import datetime
 from google.cloud import secretmanager
 from notion.client import NotionClient
 
@@ -58,7 +58,7 @@ def get_notion_data():
             'Status': status_key[row.status],
             'Description': row.description,
             'Primary Person': ', '.join(row.primary_person),
-            'Date Last Updated': row.date_last_updated.strftime('%Y-%m-%d'),
+            'Date Last Updated': row.date_last_updated,
             'Links': hyperlink,
             'Tags': ', '.join(row.tags)
         }
@@ -96,21 +96,6 @@ def format_status(header, data, sheet):
         time.sleep(2)
 
 
-def format_date(header, data, sheet):
-    date_index = header.index('Date Last Updated')
-    date_column = chr(ord('@') + date_index + 1)
-    row_index = 2
-    for row in data:
-        if not row[date_index]:
-            continue
-        epoch = int(row[date_index])
-        date_string = datetime.fromtimestamp(epoch).strftime('%d-%b-%y')
-        cell = '%s%s' % (date_column, row_index)
-        sheet.update(cell, date_string)
-        row_index +=1
-        time.sleep(2)
-
-
 def in_progress(notion):
     data = []
     sheet = ss.get_worksheet(0)
@@ -132,6 +117,10 @@ def in_progress(notion):
     data = sorted(data,key=lambda x: x[header.index('Status')])
     data = sorted(data,key=lambda x: x[header.index('Project')])
     data = sorted(data,key=lambda x: x[header.index('Department')])
+
+    for index, row in enumerate(data):
+        row[header.index('Date Last Updated')] = row[header.index('Date Last Updated')].strftime('%d %b %y')
+        data[index] = row
 
     sheet.update('A2', data, value_input_option='USER_ENTERED')
     format_status(header, data, sheet)
@@ -157,6 +146,10 @@ def completed(notion):
     data = sorted(data,key=lambda x: x[header.index('Project')])
     data = sorted(data,key=lambda x: x[header.index('Date Last Updated')], reverse=True)
     data = sorted(data,key=lambda x: x[header.index('Department')])
+
+    for index, row in enumerate(data):
+        row[header.index('Date Last Updated')] = row[header.index('Date Last Updated')].strftime('%d %b %y')
+        data[index] = row
 
     sheet.update('A2', data, value_input_option='USER_ENTERED')
     status_column = chr(ord('@') + header.index('Status') + 1)
