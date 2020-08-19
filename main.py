@@ -17,7 +17,7 @@ secret_path =  secret_client.secret_version_path(
     project_id, credentials_key, 'latest'
     )
 service_account = json.loads(
-    secret_client.access_secret_version(secret_path).payloada.data.decode('UTF-8')
+    secret_client.access_secret_version(secret_path).payload.data.decode('UTF-8')
     )
 gspread_auth = gspread.auth.ServiceAccountCredentials.from_service_account_info(
     info=service_account, scopes=[
