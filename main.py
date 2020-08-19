@@ -160,5 +160,8 @@ def main():
     completed(notion)
 
 
+def trigger(event, context):
+    main()
+
 if __name__ == '__main__':
     main()
