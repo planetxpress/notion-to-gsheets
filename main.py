@@ -4,12 +4,28 @@ import re
 import os
 import time
 from datetime import datetime
+from google.cloud import secretmanager
 from notion.client import NotionClient
 
+credentials_key = os.getenv('CREDENTIALS_KEY')
 notion_token = os.getenv('NOTION_TOKEN')
 gsheet_id = os.getenv('GSHEET_ID')
 notion_page = os.getenv('NOTION_PAGE')
-gc = gspread.service_account()
+project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
+secret_client = secretmanager.SecretManagerServiceClient()
+secret_path =  secret_client.secret_version_path(
+    project_id, credentials_key, 'latest'
+    )
+service_account = json.loads(
+    secret_client.access_secret_version(secret_path).payloada.data.decode('UTF-8')
+    )
+gspread_auth = gspread.auth.ServiceAccountCredentials.from_service_account_info(
+    info=service_account, scopes=[
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive'
+        ]
+    )
+gc = gspread.Client(auth=gspread_auth)
 ss = gc.open_by_key(gsheet_id)
 
 
@@ -77,7 +93,7 @@ def format_status(header, data, sheet):
         sheet.format(cell, status_key[status]['format'])
         sheet.update(cell, status_key[status]['value'])
         row_index += 1
-        time.sleep(1.5)
+        time.sleep(2)
 
 
 def format_date(header, data, sheet):
@@ -92,7 +108,7 @@ def format_date(header, data, sheet):
         cell = '%s%s' % (date_column, row_index)
         sheet.update(cell, date_string)
         row_index +=1
-        time.sleep(1)
+        time.sleep(2)
 
 
 def in_progress(notion):
@@ -162,6 +178,7 @@ def main():
 
 def trigger(event, context):
     main()
+
 
 if __name__ == '__main__':
     main()
