@@ -34,7 +34,6 @@ def get_notion_data():
     client = NotionClient(token_v2=notion_token)
     cv = client.get_collection_view(notion_page)
     for row in cv.collection.get_rows():
-
         # Convert named status to numbers for sorting
         status_key = {
             'Red': '1',
@@ -43,25 +42,33 @@ def get_notion_data():
             'Delayed': '4',
             'Complete': 'Complete'
         }
-
+                
         # Convert hyperlink to not look like garbage
         link_match = re.match(r'(http|https)://([A-Za-z\-.]*)/', row.links)
         if link_match:
             hyperlink = '=HYPERLINK("%s","%s")' % (row.links, link_match.group(2))
         else:
             hyperlink = ''
+        if row.status not in status_key:
+            status = ''
+        else:
+            status = status_key[row.status]
 
         item = {
             'Department': row.department,
             'Project': ', '.join(row.project),
             'Name': row.name,
-            'Status': status_key[row.status],
+            'Status': status,
             'Description': row.description,
             'Primary Person': ', '.join(row.primary_person),
             'Date Last Updated': row.date_last_updated,
             'Links': hyperlink,
             'Tags': ', '.join(row.tags)
         }
+        for i in item:
+            if not item[i]:
+                item[i] = ''
+
         notion.append(item)
     return notion
 
@@ -84,15 +91,17 @@ def reset_format(sheet):
 def format_status(header, data, sheet):
     status_index = header.index('Status')
     status_column = chr(ord('@') + status_index + 1)
-    row_index = 2
     with open('status_key.json', 'r') as f:
         status_key = json.load(f)
+    row_index = 1
     for row in data:
+        row_index += 1
         status = row[status_index]
+        if not status:
+            continue
         cell = '%s%s' % (status_column, row_index)
         sheet.format(cell, status_key[status]['format'])
         sheet.update(cell, status_key[status]['value'])
-        row_index += 1
         time.sleep(2)
 
 
