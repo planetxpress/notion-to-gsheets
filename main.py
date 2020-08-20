@@ -42,7 +42,7 @@ def get_notion_data():
             'Delayed': '4',
             'Complete': 'Complete'
         }
-                
+
         # Convert hyperlink to not look like garbage
         link_match = re.match(r'(http|https)://([A-Za-z\-.]*)/', row.links)
         if link_match:
